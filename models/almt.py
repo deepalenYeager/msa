@@ -14,6 +14,7 @@
 """
 
 import math
+from types import SimpleNamespace
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -561,5 +562,53 @@ class MRGNet(nn.Module):
         return out
 
 
+def _prepare_model_args(args):
+    base_cfg = getattr(args, "model", args)
+    if isinstance(base_cfg, SimpleNamespace):
+        cfg = vars(base_cfg).copy()
+    elif isinstance(base_cfg, dict):
+        cfg = dict(base_cfg)
+    else:
+        cfg = {key: getattr(base_cfg, key) for key in dir(base_cfg) if not key.startswith("_")}
+
+    def set_if_missing(key, value):
+        if key not in cfg and value is not None:
+            cfg[key] = value
+
+    dims = [cfg.get("l_input_dim"), cfg.get("a_input_dim"), cfg.get("v_input_dim")]
+    if "feature_dims" not in cfg and all(v is not None for v in dims):
+        cfg["feature_dims"] = dims
+
+    lengths = [cfg.get("l_input_length"), cfg.get("a_input_length"), cfg.get("v_input_length")]
+    if "feature_length" not in cfg and all(v is not None for v in lengths):
+        cfg["feature_length"] = lengths
+
+    if "dst_feature_dims" not in cfg:
+        for key in ("proj_input_dim", "token_dim", "l_proj_dst_dim", "a_proj_dst_dim", "v_proj_dst_dim"):
+            value = cfg.get(key)
+            if value is not None:
+                cfg["dst_feature_dims"] = value
+                break
+
+    set_if_missing("dst_feature_hidden_dims", cfg.get("proj_mlp_dim"))
+    set_if_missing("dst_embedding_length", cfg.get("token_len"))
+
+    depth = cfg.get("proj_depth")
+    if "embedding_depth" not in cfg and depth is not None:
+        cfg["embedding_depth"] = [depth, depth, depth]
+
+    heads = cfg.get("proj_heads")
+    if "embedding_heads" not in cfg and heads is not None:
+        cfg["embedding_heads"] = [heads, heads, heads]
+
+    set_if_missing("memory_heads", cfg.get("fusion_heads"))
+    set_if_missing("dropout", cfg.get("ahl_droup"))
+    set_if_missing("bert_hidden_size", cfg.get("l_input_dim"))
+    set_if_missing("pretrained", cfg.get("bert_pretrained"))
+
+    return SimpleNamespace(**cfg)
+
+
 def build_model(args):
-    return MRGNet(args)
+    model_args = _prepare_model_args(args)
+    return MRGNet(model_args)
