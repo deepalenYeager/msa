@@ -11,7 +11,7 @@ import yaml
 
 
 parser = argparse.ArgumentParser() 
-parser.add_argument('--config_file', type=str, default='configs/sims.yaml') 
+parser.add_argument('--config_file', type=str, default='configs/mosi.yaml') 
 parser.add_argument('--seed', type=int, default=-1) 
 parser.add_argument('--gpu_id', type=int, default=-1) 
 opt = parser.parse_args()

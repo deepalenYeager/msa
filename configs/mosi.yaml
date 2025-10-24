@@ -1,17 +1,17 @@
 base:
   project_name: ALMT_Demo
   ckpt_root: ./ckpt
-  seed: 7
+  seed: 1111
   lr: 0.0001
   weight_decay: 0.0001
   batch_size: 64
   n_epochs: 200
   num_workers: 8
-  gpu_id: 1
+  gpu_id: 0
 
 dataset:
   datasetName: mosi
-  dataPath: /workspace/datasets/MSA_Datasets/MOSI/unaligned_50.pkl 
+  dataPath: /home/qsl/MOSI/Processed/unaligned_50.pkl 
   train_mode: regression
 
 model:  
